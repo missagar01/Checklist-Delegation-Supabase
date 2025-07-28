@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { checklistData, checklistHistoryData, updateChecklist } from "../../redux/slice/checklistSlice"
 import { postChecklistAdminDoneAPI } from "../../redux/api/checkListApi"
 import { uniqueDoerNameData} from "../../redux/slice/assignTaskSlice";
+import { useNavigate } from "react-router-dom"
 
 // Configuration object - Move all configurations here
 const CONFIG = {
@@ -56,6 +57,8 @@ dispatch(checklistHistoryData())
  dispatch(uniqueDoerNameData());
 
   },[dispatch])
+
+
 
   // NEW: Admin history selection states
   const [selectedHistoryItems, setSelectedHistoryItems] = useState([])
@@ -229,6 +232,23 @@ dispatch(checklistHistoryData())
     )
   }
 
+  const parseSupabaseDate = (dateStr) => {
+  if (!dateStr) return null;
+  
+  // Handle ISO string from Supabase
+  if (typeof dateStr === 'string' && dateStr.includes('T')) {
+    return new Date(dateStr);
+  }
+  
+  // Handle already parsed Date objects
+  if (dateStr instanceof Date) {
+    return dateStr;
+  }
+  
+  // Fallback for other formats
+  return new Date(dateStr);
+};
+
   // UPDATED: Confirmation handler - Don't remove items from UI, just update their status
   const confirmMarkDone = async () => {
     setConfirmationModal({ isOpen: false, itemCount: 0 });
@@ -294,39 +314,42 @@ const filteredHistoryData = useMemo(() => {
         ? selectedMembers.includes(item.name)
         : true;
 
-      // Date filter
+      // Date range filter
       let matchesDateRange = true;
-
-if (startDate || endDate) {
-  const itemDate = parseDateFromDDMMYYYY(item.task_start_date);
-
-  if (!itemDate) return false; // skip if invalid
-
-  itemDate.setHours(0, 0, 0, 0); // strip time from submission_date
-
-  if (startDate) {
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0); // strip time
-    if (itemDate < start) matchesDateRange = false;
-  }
-
-  if (endDate) {
-    const end = new Date(endDate);
-    end.setHours(0, 0, 0, 0); // strip time
-    if (itemDate > end) matchesDateRange = false;
-  }
-}
-
       
+      if (startDate || endDate) {
+        const itemDate = parseSupabaseDate(item.task_start_date);
+        if (!itemDate || isNaN(itemDate.getTime())) return false;
+
+        // Normalize to start of day for comparison
+        const itemDateOnly = new Date(
+          itemDate.getFullYear(),
+          itemDate.getMonth(),
+          itemDate.getDate()
+        );
+
+        // Create comparison dates
+        const start = startDate ? new Date(startDate) : null;
+        if (start) start.setHours(0, 0, 0, 0);
+        
+        const end = endDate ? new Date(endDate) : null;
+        if (end) {
+          end.setHours(23, 59, 59, 999); // End of day
+        }
+
+        // Compare dates
+        if (start && itemDateOnly < start) matchesDateRange = false;
+        if (end && itemDateOnly > end) matchesDateRange = false;
+      }
 
       return matchesSearch && matchesMember && matchesDateRange;
     })
     .sort((a, b) => {
-      const dateA = parseDateFromDDMMYYYY(a.task_start_date);
-      const dateB = parseDateFromDDMMYYYY(b.task_start_date);
+      const dateA = parseSupabaseDate(a.task_start_date);
+      const dateB = parseSupabaseDate(b.task_start_date);
       if (!dateA) return 1;
       if (!dateB) return -1;
-      return dateB - dateA;
+      return dateB - dateA; // Sort newest first
     });
 }, [history, searchTerm, selectedMembers, startDate, endDate]);
 
@@ -629,7 +652,7 @@ const handleImageUpload = async (id, e) => {
   }
 
   // UPDATED: MAIN SUBMIT FUNCTION with date-time formatting
- const handleSubmit = async () => {
+const handleSubmit = async () => {
   const selectedItemsArray = Array.from(selectedItems);
   if (selectedItemsArray.length === 0) {
     alert("Please select at least one item to submit");
@@ -663,7 +686,7 @@ const handleImageUpload = async (id, e) => {
     return;
   }
 
-   setIsSubmitting(true);
+  setIsSubmitting(true);
 
   // Prepare the submission data
   const submissionData = selectedItemsArray.map((id) => {
@@ -688,16 +711,13 @@ const handleImageUpload = async (id, e) => {
         size: imageData.file.size,
         previewUrl: imageData.previewUrl
       } : item.image ? {
-        // If image exists in account data but not in uploadedImages
         existingImage: typeof item.image === 'string' ? item.image : 'File object'
       } : null
     };
   });
 
-  // Log the submission data to console
   console.log("Submission Data:", submissionData);
-  dispatch(updateChecklist(submissionData))
-  
+  await dispatch(updateChecklist(submissionData));
 
   // Simulate submission delay
   setTimeout(() => {
@@ -710,10 +730,10 @@ const handleImageUpload = async (id, e) => {
     setRemarksData({});
     setUploadedImages({});
 
-    // Auto-clear success message after 5 seconds
+    // Refresh the page after showing success message
     setTimeout(() => {
-      setSuccessMessage("");
-    }, 5000);
+      window.location.reload();
+    }, 1000); // Refresh after 1 second (adjust as needed)
   }, 1500);
 };
 
@@ -852,25 +872,28 @@ const handleImageUpload = async (id, e) => {
                         <label htmlFor="start-date" className="text-sm text-gray-700 mr-1">
                           From
                         </label>
-                        <input
-                          id="start-date"
-                          type="date"
-                          value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
-                          className="text-sm border border-gray-200 rounded-md p-1"
-                        />
+                       <input
+  type="date"
+  value={startDate}
+  onChange={(e) => {
+    // Convert to YYYY-MM-DD format if needed
+    setStartDate(e.target.value);
+  }}
+  className="text-sm border border-gray-200 rounded-md p-1"
+/>
                       </div>
                       <div className="flex items-center">
                         <label htmlFor="end-date" className="text-sm text-gray-700 mr-1">
                           To
                         </label>
-                        <input
-                          id="end-date"
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
-                          className="text-sm border border-gray-200 rounded-md p-1"
-                        />
+                       <input
+  type="date"
+  value={endDate}
+  onChange={(e) => {
+    setEndDate(e.target.value);
+  }}
+  className="text-sm border border-gray-200 rounded-md p-1"
+/>
                       </div>
                     </div>
                   </div>
@@ -1055,16 +1078,19 @@ const handleImageUpload = async (id, e) => {
                               {history.task_description || "—"}
                             </div>
                           </td>
-                          <td className="px-3 py-4 bg-yellow-50 min-w-[140px]">
+                     <td className="px-3 py-4 bg-yellow-50 min-w-[140px]">
   <div className="text-sm text-gray-900 break-words">
     {history.task_start_date ? (() => {
-      const dateObj = new Date(history.task_start_date);
-      const day = ("0" + dateObj.getDate()).slice(-2);
-      const month = ("0" + (dateObj.getMonth() + 1)).slice(-2);
-      const year = dateObj.getFullYear();
-      const hours = ("0" + dateObj.getHours()).slice(-2);
-      const minutes = ("0" + dateObj.getMinutes()).slice(-2);
-      const seconds = ("0" + dateObj.getSeconds()).slice(-2);
+      const date = parseSupabaseDate(history.task_start_date);
+      if (!date || isNaN(date.getTime())) return "Invalid date";
+      
+      // Format as DD/MM/YYYY HH:MM:SS
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const seconds = date.getSeconds().toString().padStart(2, '0');
 
       return (
         <div>
@@ -1079,7 +1105,6 @@ const handleImageUpload = async (id, e) => {
     })() : "—"}
   </div>
 </td>
-
                           <td className="px-3 py-4 min-w-[80px]">
                             <div className="text-sm text-gray-900 break-words">{history.frequency || "—"}</div>
                           </td>

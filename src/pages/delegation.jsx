@@ -918,14 +918,8 @@ function DelegationDataPage() {
     // Here you can do whatever you want with the selectedData
     console.log("Selected Data:", selectedData);
 
-    // For demonstration, we'll just show an alert with the data
-    alert(
-      `Selected data ready for submission:\n${JSON.stringify(
-        selectedData,
-        null,
-        2
-      )}`
-    );
+   
+   
 
     dispatch(
       insertDelegationDoneAndUpdate({
@@ -944,6 +938,11 @@ function DelegationDataPage() {
     setSuccessMessage(
       `Successfully prepared ${selectedItemsArray.length} task records for submission!`
     );
+
+    
+     setTimeout(() => {
+    window.location.reload();
+  }, 1000); // You can reduce or increase this delay
   };
 
   const selectedItemsCount = selectedItems.size;

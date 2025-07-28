@@ -103,27 +103,27 @@ if (upsertError) {
 
 
 export const fetchDelegationDataSortByDate = async () => {
+  const role=localStorage.getItem("role");
+   const username=localStorage.getItem("user-name");
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('delegation')
       .select('*')
       .order('task_start_date', { ascending: true })
-      
-         .or('status.is.null,status.eq.extend');
+      .or('status.is.null,status.eq.extend');
 
-      
+    // Apply role-based filter
+    if (role === 'user' && username) {
+      query = query.eq('name', username);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.log("Error when fetching data", error);
+
       return [];
     }
-
-    // const seen = new Set();
-    // const uniqueRows = data.filter(row => {
-    //   if (seen.has(row.task_description)) return false;
-    //   seen.add(row.task_description);
-    //   return true;
-    // });
 
     console.log("Fetched successfully", data);
     return data;
@@ -133,30 +133,29 @@ export const fetchDelegationDataSortByDate = async () => {
     return [];
   }
 };
+
 
 
 export const fetchDelegation_DoneDataSortByDate = async () => {
+   const role=localStorage.getItem("role");
+   const username=localStorage.getItem("user-name");
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('delegation_done')
       .select('*')
-      .order('created_at', { ascending: false })
-      
-         
+      .order('created_at', { ascending: false });
 
-      
+    // Filter by user if role is 'user'
+    if (role === 'user' && username) {
+      query = query.eq('name', username);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.log("Error when fetching data", error);
       return [];
     }
-
-    // const seen = new Set();
-    // const uniqueRows = data.filter(row => {
-    //   if (seen.has(row.task_description)) return false;
-    //   seen.add(row.task_description);
-    //   return true;
-    // });
 
     console.log("Fetched successfully", data);
     return data;
@@ -166,4 +165,5 @@ export const fetchDelegation_DoneDataSortByDate = async () => {
     return [];
   }
 };
+
 

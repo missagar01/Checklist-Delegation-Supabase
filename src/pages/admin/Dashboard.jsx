@@ -17,8 +17,8 @@ import {
   Cell
 } from "recharts"
 import { useDispatch, useSelector } from "react-redux"
-import {  dashboardData, } from "../../redux/slice/dashboardSlice.js"
-import { fetchDashboardDataApi } from "../../redux/api/dashboardApi.js"
+import {  completeTaskInTable, dashboardData, overdueTaskInTable, pendingTaskInTable, totalTaskInTable, } from "../../redux/slice/dashboardSlice.js"
+import { countTotalTaskApi, fetchDashboardDataApi } from "../../redux/api/dashboardApi.js"
 
 export default function AdminDashboard() {
   const [dashboardType, setDashboardType] = useState("checklist")
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
   });
 
 
-  const {dashboard}=useSelector((state)=>state.dashBoard)
+  const {dashboard,totalTask,completeTask,pendingTask,overdueTask}=useSelector((state)=>state.dashBoard)
   const dispatch =useDispatch();
 
 
@@ -170,6 +170,7 @@ export default function AdminDashboard() {
   // };
   
   
+ 
  
   
 
@@ -287,13 +288,31 @@ export default function AdminDashboard() {
     return date > today
   }
 
-  const parseDateFromDDMMYYYY = (dateStr) => {
-    if (!dateStr) return null
-    const parts = dateStr.split('/')
-    if (parts.length !== 3) return null
-    const [day, month, year] = parts.map(Number)
-    return new Date(year, month - 1, day)
+const parseDateFromDDMMYYYY = (dateStr) => {
+  if (dateStr instanceof Date) return dateStr
+
+  if (typeof dateStr === 'string') {
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/')
+      if (parts.length !== 3) return null
+      const [day, month, year] = parts.map(Number)
+
+      // Check if day/month/year are valid numbers
+      if (!day || !month || !year) return null
+
+      return new Date(year, month - 1, day)
+    }
+
+    // Fallback: Try ISO format
+    const parsed = new Date(dateStr)
+    if (!isNaN(parsed)) return parsed
   }
+
+  console.warn('Unsupported date format in parseDateFromDDMMYYYY:', dateStr)
+  return null
+}
+
+
 
 
   // Parse Google Sheets Date format into a proper date string
@@ -463,7 +482,11 @@ export default function AdminDashboard() {
   }
   
   useEffect(() => {
-    fetchDepartmentData()
+    fetchDepartmentData();
+    dispatch(totalTaskInTable(dashboardType));
+    dispatch(completeTaskInTable(dashboardType))
+    dispatch(pendingTaskInTable(dashboardType))
+    dispatch(overdueTaskInTable(dashboardType))
   }, [dashboardType])
 
   // Filter tasks based on criteria
@@ -693,7 +716,7 @@ export default function AdminDashboard() {
               <ListTodo className="h-4 w-4 text-blue-500" />
             </div>
             <div className="p-4">
-              <div className="text-3xl font-bold text-blue-700">{departmentData.totalTasks}</div>
+              <div className="text-3xl font-bold text-blue-700">{totalTask}</div>
               <p className="text-xs text-blue-600">
                 {dashboardType === "delegation"
                   ? "All tasks in delegation sheet"
@@ -712,7 +735,7 @@ export default function AdminDashboard() {
             </div>
             <div className="p-4">
               <div className="text-3xl font-bold text-green-700">
-                {dashboardType === "delegation" ? departmentData.completedRatingOne : departmentData.completedTasks}
+                { completeTask}
               </div>
               <p className="text-xs text-green-600">
                 {dashboardType === "delegation" ? "Tasks completed once" : "Total completed till date"}
@@ -733,7 +756,7 @@ export default function AdminDashboard() {
             </div>
             <div className="p-4">
               <div className="text-3xl font-bold text-amber-700">
-                {dashboardType === "delegation" ? departmentData.completedRatingTwo : departmentData.pendingTasks}
+                {pendingTask}
               </div>
               <p className="text-xs text-amber-600">
                 {dashboardType === "delegation" ? "Tasks completed twice" : "Including today + overdue"}
@@ -754,7 +777,7 @@ export default function AdminDashboard() {
             </div>
             <div className="p-4">
               <div className="text-3xl font-bold text-red-700">
-                {dashboardType === "delegation" ? departmentData.completedRatingThreePlus : departmentData.overdueTasks}
+                {overdueTask}
               </div>
               <p className="text-xs text-red-600">
                 {dashboardType === "delegation" ? "Tasks completed 3+ times" : "Past due (excluding today)"}

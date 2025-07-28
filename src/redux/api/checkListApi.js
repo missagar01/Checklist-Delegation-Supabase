@@ -1,29 +1,37 @@
 import supabase from "../../SupabaseClient";
 
 export const fetchChechListDataSortByDate = async () => {
+const role=localStorage.getItem('role');
+const username=localStorage.getItem('user-name')
+
   try {
     const today = new Date();
-    const startOfToday = new Date(today.setHours(0, 0, 0, 0)).toISOString(); // Today 00:00:00
+    const startOfToday = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+    
     const endOfTomorrow = new Date();
     endOfTomorrow.setDate(endOfTomorrow.getDate() + 1);
-    endOfTomorrow.setHours(23, 59, 59, 999); // Tomorrow 23:59:59
+    endOfTomorrow.setHours(23, 59, 59, 999);
     const endOfTomorrowISO = endOfTomorrow.toISOString();
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('checklist')
       .select('*')
       .lte('task_start_date', endOfTomorrowISO)
       .order('task_start_date', { ascending: true })
       .or('submission_date.is.null,status.is.null');
 
-      
+    // Apply role filter
+    if (role === 'user' && username) {
+      query = query.eq('name', username);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.log("Error when fetching data", error);
       return [];
     }
 
-   
     console.log("Fetched successfully", data);
     return data;
 
@@ -33,33 +41,39 @@ export const fetchChechListDataSortByDate = async () => {
   }
 };
 
+
 export const fetchChechListDataForHistory = async () => {
+const role=localStorage.getItem('role');
+const username=localStorage.getItem('user-name')
+
   const today = new Date();
   const startOfToday = new Date(today.setHours(0, 0, 0, 0)).toISOString(); // Today 00:00:00
+
   const endOfTomorrow = new Date();
   endOfTomorrow.setDate(endOfTomorrow.getDate() + 1);
   endOfTomorrow.setHours(23, 59, 59, 999); // Tomorrow 23:59:59
   const endOfTomorrowISO = endOfTomorrow.toISOString();
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('checklist')
       .select('*')
       .order('task_start_date', { ascending: true })
       .lte('task_start_date', endOfTomorrowISO)
       .not('submission_date', 'is', null)
-     .not('status', 'is', null);
+      .not('status', 'is', null);
 
-     
+    if (role === 'user' && username) {
+      query = query.eq('name', username);
+    }
 
-      
+    const { data, error } = await query;
 
     if (error) {
       console.log("Error when fetching data", error);
       return [];
     }
 
-   
     console.log("Fetched successfully", data);
     return data;
 
@@ -68,6 +82,7 @@ export const fetchChechListDataForHistory = async () => {
     return [];
   }
 };
+
 
 
 export const updateChecklistData = async (submissionData) => {
