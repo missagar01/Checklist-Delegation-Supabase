@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { CheckSquare, ClipboardList, Home, LogOut, Menu, Database, ChevronDown, ChevronRight ,  Zap} from 'lucide-react'
+import { CheckSquare, ClipboardList, Home, LogOut, Menu, Database, ChevronDown, ChevronRight ,  Zap, Settings} from 'lucide-react'
 
 export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
   const location = useLocation()
@@ -101,6 +101,14 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
       active: location.pathname.includes("/dashboard/data"),
       submenu: true,
       showFor: ["admin", "user"] // Show for both roles
+    },
+     {
+      href:"/dashboard/setting",
+      label: "Settings",
+      icon: Settings,
+      active: location.pathname.includes("/dashboard/setting"),
+     
+      showFor: ["admin"] // Only show for admin
     },
   ]
 

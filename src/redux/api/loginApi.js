@@ -8,6 +8,7 @@ export const LoginCredentialsApi = async (formData) => {
     .select('*')
     .eq('user_name', formData.username)
     .eq('password', formData.password)
+     .eq('status', 'active')
     .single(); // get a single user
 
   if (error || !data) {

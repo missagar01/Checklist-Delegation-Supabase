@@ -930,9 +930,9 @@ dispatch(assignTaskInTable(generatedTasks))
                 >
                   <option value="">Select Department</option>
                   {department.map((dept, index) => (
-                    <option key={index} value={dept}>
-                      {dept}
-                    </option>
+                    <option key={index} value={dept.department}>
+  {dept.department}
+</option>
                   ))}
                 </select>
               </div>

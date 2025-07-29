@@ -13,6 +13,7 @@ import QuickTask from "./pages/QuickTask"
 import AdminDelegationTask from "./pages/delegation-data"
 import "./index.css"
 import Demo from "./pages/user/Demo"
+import Setting from "./pages/Setting"
 
 // Auth wrapper component to protect routes
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -116,6 +117,15 @@ function App() {
           element={
             <ProtectedRoute>
               <AccountDataPage/>
+            </ProtectedRoute>
+          }
+        />
+
+             <Route
+          path="/dashboard/setting"
+          element={
+            <ProtectedRoute>
+              <Setting/>
             </ProtectedRoute>
           }
         />
