@@ -5,6 +5,7 @@ export const fetchUniqueDepartmentDataApi = async () =>{
        const { data, error } = await supabase
   .from('users')
   .select('department','given_by','user_name')
+   .not('department', 'is', null)
   .order('department', { ascending: true });
   
 
@@ -28,6 +29,7 @@ export const fetchUniqueGivenByDataApi = async () =>{
        const { data, error } = await supabase
   .from('users')
   .select('given_by')
+   .not('given_by', 'is', null)
   .order('given_by', { ascending: true });
   
 
@@ -51,6 +53,7 @@ export const fetchUniqueDoerNameDataApi = async () =>{
        const { data, error } = await supabase
   .from('users')
   .select('user_name')
+   .not('user_name', 'is', null)
   .order('user_name', { ascending: true });
   
 

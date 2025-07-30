@@ -336,7 +336,7 @@ const parseDateFromDDMMYYYY = (dateStr) => {
   
 
   // Modified fetch function to support both checklist and delegation
-  const fetchDepartmentData = async () => {
+const fetchDepartmentData = async () => {
     try {
       const data = await fetchDashboardDataApi(dashboardType)
       const username = localStorage.getItem('user-name')
@@ -412,7 +412,7 @@ const parseDateFromDDMMYYYY = (dateStr) => {
         return {
           id: task.task_id,
           title: task.task_description,
-          assignedTo: task.name,
+          assignedTo: task.name || "Unassigned", // Fallback for null/undefined
           taskStartDate: formatDateToDDMMYYYY(taskStartDate),
           status,
           frequency: task.frequency || "one-time",
@@ -434,30 +434,33 @@ const parseDateFromDDMMYYYY = (dateStr) => {
         { name: "Overdue", value: overdueTasks, color: "#ef4444" }
       ]
 
-      // Get unique staff members
       const staffMap = new Map()
-      processedTasks.forEach(task => {
-        if (!staffMap.has(task.assignedTo)) {
-          staffMap.set(task.assignedTo, {
-            name: task.assignedTo,
-            totalTasks: 0,
-            completedTasks: 0,
-            pendingTasks: 0
-          })
-        }
-        const staff = staffMap.get(task.assignedTo)
-        staff.totalTasks++
-        if (task.status === "completed") {
-          staff.completedTasks++
-        } else {
-          staff.pendingTasks++
-        }
-      })
+      
+      if (processedTasks.length > 0) {
+        processedTasks.forEach(task => {
+          const assignedTo = task.assignedTo || "Unassigned" // Ensure we have a string
+          if (!staffMap.has(assignedTo)) {
+            staffMap.set(assignedTo, {
+              name: assignedTo,
+              totalTasks: 0,
+              completedTasks: 0,
+              pendingTasks: 0
+            })
+          }
+          const staff = staffMap.get(assignedTo)
+          staff.totalTasks++
+          if (task.status === "completed") {
+            staff.completedTasks++
+          } else {
+            staff.pendingTasks++
+          }
+        })
+      }
 
       const staffMembers = Array.from(staffMap.values()).map(staff => ({
         ...staff,
-        id: staff.name.replace(/\s+/g, "-").toLowerCase(),
-        email: `${staff.name.toLowerCase().replace(/\s+/g, ".")}@example.com`,
+        id: (staff.name || "unassigned").replace(/\s+/g, "-").toLowerCase(),
+        email: `${(staff.name || "unassigned").toLowerCase().replace(/\s+/g, ".")}@example.com`,
         progress: staff.totalTasks > 0 ? Math.round((staff.completedTasks / staff.totalTasks) * 100) : 0
       }))
 
@@ -480,7 +483,6 @@ const parseDateFromDDMMYYYY = (dateStr) => {
       console.error(`Error fetching ${dashboardType} data:`, error)
     }
   }
-  
   useEffect(() => {
     fetchDepartmentData();
     dispatch(totalTaskInTable(dashboardType));
