@@ -6,15 +6,12 @@ export const insertDelegationDoneAndUpdate = createAsyncThunk(
   'delegation/insertDelegationDoneAndUpdate',
   async ({ selectedDataArray, uploadedImages }, { rejectWithValue }) => {
     const userName = localStorage.getItem('user-name');
-    console.log(selectedDataArray.next_target_date);
-    
 
     const formatDate = (val) => {
-  if (!val || val === '') return null;
-  const date = new Date(val);
-  return isNaN(date.getTime()) ? null : date.toISOString();
-};
-
+      if (!val || val === '') return null;
+      const date = new Date(val);
+      return isNaN(date.getTime()) ? null : date.toISOString();
+    };
 
     try {
       for (const item of selectedDataArray) {
@@ -25,7 +22,7 @@ export const insertDelegationDoneAndUpdate = createAsyncThunk(
         if (imageFile) {
           const filePath = `${item.task_id}/${crypto.randomUUID()}_${imageFile.name}`;
           const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('delegation') // Ensure this bucket exists
+            .from('delegation')
             .upload(filePath, imageFile, {
               cacheControl: '3600',
               upsert: true,
@@ -41,36 +38,34 @@ export const insertDelegationDoneAndUpdate = createAsyncThunk(
             .getPublicUrl(uploadData.path);
 
           imageUrl = publicUrlData?.publicUrl || null;
-          console.log(imageUrl);
-          
         }
 
-        // Step 2: Insert into delegation_done table
-    const { error: upsertError } = await supabase
-  .from('delegation_done')
-  .upsert([
-    {
-      task_id: item.task_id,
-      next_extend_date: item.status === 'Done' ? null : formatDate(item.next_target_date),
-      status: item.status === 'Done' ? 'done' : 'extend',
-      reason: item.remarks,
-      task_description: item.task_description,
-      given_by: item.given_by,
-      name: userName,
-      image_url: imageUrl,
-    },
-  ], {
-    onConflict: 'task_id', // Ensure it targets the unique constraint
-  });
+        // Step 2: Insert into delegation_done table with task_id
+        const { data: insertData, error: insertError } = await supabase
+          .from('delegation_done')
+          .insert([
+            {
+              task_id: item.task_id, // Add the task_id here
+              next_extend_date: item.status === 'Done' ? null : formatDate(item.next_target_date),
+              status: item.status === 'Done' ? 'done' : 'extend',
+              reason: item.remarks,
+              task_description: item.task_description,
+              given_by: item.given_by,
+              name: userName,
+              image_url: imageUrl,
+            },
+          ])
+          .select();
 
-if (upsertError) {
-  console.error('Upsert Error:', upsertError);
-  throw upsertError;
-}
+        if (insertError) {
+          console.error('Insert Error:', insertError);
+          throw insertError;
+        }
 
+        console.log('New row created in delegation_done:', insertData);
 
         // Step 3: Update delegation table
-       const updateFields = {
+        const updateFields = {
           status: item.status === 'Done' ? 'done' : 'extend',
           submission_date: item.status === 'Done' ? new Date().toISOString() : null,
           remarks: item.remarks,
@@ -78,7 +73,7 @@ if (upsertError) {
         };
 
         if (item.status !== 'Done') {
-           updateFields.planned_date = formatDate(item.next_target_date);
+          updateFields.planned_date = formatDate(item.next_target_date);
         }
 
         // Step 4: Update delegation table
@@ -101,10 +96,9 @@ if (upsertError) {
   }
 );
 
-
 export const fetchDelegationDataSortByDate = async () => {
-  const role=localStorage.getItem("role");
-   const username=localStorage.getItem("user-name");
+  const role = localStorage.getItem("role");
+  const username = localStorage.getItem("user-name");
   try {
     let query = supabase
       .from('delegation')
@@ -121,7 +115,6 @@ export const fetchDelegationDataSortByDate = async () => {
 
     if (error) {
       console.log("Error when fetching data", error);
-
       return [];
     }
 
@@ -134,11 +127,9 @@ export const fetchDelegationDataSortByDate = async () => {
   }
 };
 
-
-
 export const fetchDelegation_DoneDataSortByDate = async () => {
-   const role=localStorage.getItem("role");
-   const username=localStorage.getItem("user-name");
+  const role = localStorage.getItem("role");
+  const username = localStorage.getItem("user-name");
   try {
     let query = supabase
       .from('delegation_done')
@@ -165,5 +156,3 @@ export const fetchDelegation_DoneDataSortByDate = async () => {
     return [];
   }
 };
-
-

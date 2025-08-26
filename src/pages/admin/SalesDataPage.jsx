@@ -11,12 +11,12 @@ import { useNavigate } from "react-router-dom"
 // Configuration object - Move all configurations here
 const CONFIG = {
   // Google Apps Script URL No pending tasks for tommor
-  APPS_SCRIPT_URL:
-    "https://script.google.com/macros/s/AKfycbzXzqnKmbeXw3i6kySQcBOwxHQA7y8WBFfEe69MPbCR-jux0Zte7-TeSKi8P4CIFkhE/exec",
-  // Google Drive folder ID for file uploads
-  DRIVE_FOLDER_ID: "1Y1lg8X7qFA4KgvcaVA_ywKx1gOnZ2ZO6",
-  // Sheet name to work with
-  SHEET_NAME: "Checklist",
+  // APPS_SCRIPT_URL:
+  //   "https://script.google.com/macros/s/AKfycbzXzqnKmbeXw3i6kySQcBOwxHQA7y8WBFfEe69MPbCR-jux0Zte7-TeSKi8P4CIFkhE/exec",
+  // // Google Drive folder ID for file uploads
+  // DRIVE_FOLDER_ID: "1Y1lg8X7qFA4KgvcaVA_ywKx1gOnZ2ZO6",
+  // // Sheet name to work with
+  // SHEET_NAME: "Checklist",
   // Page configuration
   PAGE_CONFIG: {
     title: "Checklist Tasks",

@@ -491,80 +491,80 @@ useEffect(()=>{
   // };
 
   // Function to fetch options from master sheet
-  const fetchMasterSheetOptions = async () => {
-    try {
-      const masterSheetId = "1pjNOV1ogLtiMm-Ow9_UVbsd3oN52jA5FdLGLgKwqlcw";
-      const masterSheetName = "master";
+  // const fetchMasterSheetOptions = async () => {
+  //   try {
+  //     const masterSheetId = "1pjNOV1ogLtiMm-Ow9_UVbsd3oN52jA5FdLGLgKwqlcw";
+  //     const masterSheetName = "master";
 
-      const url = `https://docs.google.com/spreadsheets/d/${masterSheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(
-        masterSheetName
-      )}`;
+  //     const url = `https://docs.google.com/spreadsheets/d/${masterSheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(
+  //       masterSheetName
+  //     )}`;
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch master data: ${response.status}`);
-      }
+  //     const response = await fetch(url);
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch master data: ${response.status}`);
+  //     }
 
-      const text = await response.text();
-      const jsonStart = text.indexOf("{");
-      const jsonEnd = text.lastIndexOf("}");
-      const jsonString = text.substring(jsonStart, jsonEnd + 1);
-      const data = JSON.parse(jsonString);
+  //     const text = await response.text();
+  //     const jsonStart = text.indexOf("{");
+  //     const jsonEnd = text.lastIndexOf("}");
+  //     const jsonString = text.substring(jsonStart, jsonEnd + 1);
+  //     const data = JSON.parse(jsonString);
 
-      if (!data.table || !data.table.rows) {
-        console.log("No master data found");
-        return;
-      }
+  //     if (!data.table || !data.table.rows) {
+  //       console.log("No master data found");
+  //       return;
+  //     }
 
 
-      // Extract options from columns A, B, and C
-      const departments = [];
-      const givenBy = [];
-      const doers = [];
+  //     // Extract options from columns A, B, and C
+  //     const departments = [];
+  //     const givenBy = [];
+  //     const doers = [];
 
-      // Process all rows starting from index 1 (skip header)
-      data.table.rows.slice(1).forEach((row) => {
-        // Column A - Departments
-        if (row.c && row.c[0] && row.c[0].v) {
-          const value = row.c[0].v.toString().trim();
-          if (value !== "") {
-            departments.push(value);
-          }
-        }
-        // Column B - Given By
-        if (row.c && row.c[1] && row.c[1].v) {
-          const value = row.c[1].v.toString().trim();
-          if (value !== "") {
-            givenBy.push(value);
-          }
-        }
-        // Column C - Doers
-        if (row.c && row.c[2] && row.c[2].v) {
-          const value = row.c[2].v.toString().trim();
-          if (value !== "") {
-            doers.push(value);
-          }
-        }
-      });
+  //     // Process all rows starting from index 1 (skip header)
+  //     data.table.rows.slice(1).forEach((row) => {
+  //       // Column A - Departments
+  //       if (row.c && row.c[0] && row.c[0].v) {
+  //         const value = row.c[0].v.toString().trim();
+  //         if (value !== "") {
+  //           departments.push(value);
+  //         }
+  //       }
+  //       // Column B - Given By
+  //       if (row.c && row.c[1] && row.c[1].v) {
+  //         const value = row.c[1].v.toString().trim();
+  //         if (value !== "") {
+  //           givenBy.push(value);
+  //         }
+  //       }
+  //       // Column C - Doers
+  //       if (row.c && row.c[2] && row.c[2].v) {
+  //         const value = row.c[2].v.toString().trim();
+  //         if (value !== "") {
+  //           doers.push(value);
+  //         }
+  //       }
+  //     });
 
-      // Remove duplicates and sort
-      // setDepartmentOptions([...new Set(departments)].sort());
-      // setGivenByOptions([...new Set(givenBy)].sort());
-      // setDoerOptions([...new Set(doers)].sort());
+  //     // Remove duplicates and sort
+  //     // setDepartmentOptions([...new Set(departments)].sort());
+  //     // setGivenByOptions([...new Set(givenBy)].sort());
+  //     // setDoerOptions([...new Set(doers)].sort());
 
-      // console.log("Master sheet options loaded successfully", {
-      //   departments: [...new Set(departments)],
-      //   givenBy: [...new Set(givenBy)],
-      //   doers: [...new Set(doers)],
-      // });
-    } catch (error) {
-      console.error("Error fetching master sheet options:", error);
-      // Set default options if fetch fails
-      setDepartmentOptions(["Department 1", "Department 2"]);
-      setGivenByOptions(["User 1", "User 2"]);
-      setDoerOptions(["Doer 1", "Doer 2"]);
-    }
-  };
+  //     // console.log("Master sheet options loaded successfully", {
+  //     //   departments: [...new Set(departments)],
+  //     //   givenBy: [...new Set(givenBy)],
+  //     //   doers: [...new Set(doers)],
+  //     // });
+  //   } catch (error) {
+  //     console.error("Error fetching master sheet options:", error);
+  //     // Set default options if fetch fails
+  //     setDepartmentOptions(["Department 1", "Department 2"]);
+  //     setGivenByOptions(["User 1", "User 2"]);
+  //     setDoerOptions(["Doer 1", "Doer 2"]);
+  //   }
+  // };
 
   // Update date display format
 //   const getFormattedDate = (date) => {
@@ -613,9 +613,9 @@ useEffect(()=>{
   //   return `${dateStr} at ${timeStr}`;
   // };
 
-  useEffect(() => {
-    fetchMasterSheetOptions();
-  }, []);
+  // useEffect(() => {
+  //   fetchMasterSheetOptions();
+  // }, []);
 
   // Add a function to get the last task ID from the specified sheet
   // const getLastTaskId = async (sheetName) => {
