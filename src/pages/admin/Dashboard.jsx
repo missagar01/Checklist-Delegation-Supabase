@@ -63,10 +63,46 @@ export default function AdminDashboard() {
     completionRate: 0
   });
 
-
   const {dashboard,totalTask,completeTask,pendingTask,overdueTask}=useSelector((state)=>state.dashBoard)
   const dispatch =useDispatch();
 
+  // Updated date parsing function to handle both formats
+  const parseTaskStartDate = (dateStr) => {
+    if (!dateStr || typeof dateStr !== 'string') return null;
+    
+    // Handle DD/MM/YYYY format (with or without time)
+    if (dateStr.includes('/')) {
+      // Split by space first to separate date and time
+      const parts = dateStr.split(' ');
+      const datePart = parts[0]; // "25/08/2025"
+      
+      const dateComponents = datePart.split('/');
+      if (dateComponents.length !== 3) return null;
+      
+      const [day, month, year] = dateComponents.map(Number);
+      
+      if (!day || !month || !year) return null;
+      
+      // Create date object (month is 0-indexed)
+      const date = new Date(year, month - 1, day);
+      
+      // If there's time component, parse it
+      if (parts.length > 1) {
+        const timePart = parts[1]; // "09:00:00"
+        const timeComponents = timePart.split(':');
+        if (timeComponents.length >= 2) {
+          const [hours, minutes, seconds] = timeComponents.map(Number);
+          date.setHours(hours || 0, minutes || 0, seconds || 0);
+        }
+      }
+      
+      return isNaN(date) ? null : date;
+    }
+    
+    // Fallback: Try ISO format
+    const parsed = new Date(dateStr);
+    return isNaN(parsed) ? null : parsed;
+  };
 
   // Helper function to format date from ISO format to DD/MM/YYYY
   const formatLocalDate = (isoDate) => {
@@ -94,7 +130,7 @@ export default function AdminDashboard() {
     }
 
     const filteredTasks = departmentData.allTasks.filter(task => {
-      const taskStartDate = parseDateFromDDMMYYYY(task.taskStartDate);
+      const taskStartDate = parseTaskStartDate(task.originalTaskStartDate); // Use original date string
       if (!taskStartDate) return false;
       return taskStartDate >= startDate && taskStartDate <= endDate;
     });
@@ -131,224 +167,74 @@ export default function AdminDashboard() {
     setDateRange(prev => ({ ...prev, filtered: true }));
   };
 
-
-
-  const parseSupabaseDateToDDMMYYYY = (dateStr) => {
-    const date = new Date(dateStr);
-    return !isNaN(date) ? date.toLocaleDateString("en-GB") : '';
-  };
-  
-  const parseSupabaseDate = (dateStr) => {
-    if (!dateStr || typeof dateStr !== 'string') return null; // Prevent split on null or non-string
-  
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return null;
-  
-    const [year, month, day] = parts;
-    const date = new Date(`${year}-${month}-${day}`);
-    return isNaN(date) ? null : date;
-  };
-  
-  
-  // const parseDateFromDDMMYYYY = (dateStr) => {
-  //   if (typeof dateStr !== 'string') {
-  //     // Try to convert to string if it's a Date object
-  //     if (dateStr instanceof Date && !isNaN(dateStr)) {
-  //       dateStr = dateStr.toLocaleDateString('en-GB'); // Convert to "dd/mm/yyyy"
-  //     } else {
-  //       return null; // Not a valid string or date
-  //     }
-  //   }
-  
-  //   const parts = dateStr.split('/');
-  //   if (parts.length !== 3) return null;
-  
-  //   const [day, month, year] = parts;
-  //   const formattedDate = new Date(`${year}-${month}-${day}`);
-  
-  //   return isNaN(formattedDate) ? null : formattedDate;
-  // };
-  
-  
- 
- 
-  
-
-
   // Format date as DD/MM/YYYY
- // Format date as DD/MM/YYYY
-// const formatDateToDDMMYYYY = (date) => {
-//   if (!date || !(date instanceof Date) || isNaN(date)) return "";
-//   const day = date.getDate().toString().padStart(2, '0');
-//   const month = (date.getMonth() + 1).toString().padStart(2, '0');
-//   const year = date.getFullYear();
-//   return `${day}/${month}/${year}`;
-// };
-
-// // Check if date is today
-// const isDateToday = (date) => {
-//   if (!date) return false;
-//   const today = new Date();
-//   return (
-//     date.getDate() === today.getDate() &&
-//     date.getMonth() === today.getMonth() &&
-//     date.getFullYear() === today.getFullYear()
-//   );
-// };
-
-// // Check if date is in the past (excluding today)
-// const isDateInPast = (date) => {
-//   if (!date) return false;
-//   const today = new Date();
-//   today.setHours(0, 0, 0, 0);
-//   return date < today && !isDateToday(date);
-// };
-
-// // Check if date is in the future (excluding today)
-// const isDateFuture = (date) => {
-//   if (!date) return false;
-//   const today = new Date();
-//   today.setHours(0, 0, 0, 0);
-//   return date > today;
-// };
-
-  // Parse DD/MM/YYYY to Date object
-
-  
-
-  // Function to check if a date is in the past
-  // const isDateInPast = (dateStr) => {
-  //   const date = parseDateFromDDMMYYYY(dateStr)
-  //   if (!date) return false
-  //   const today = new Date()
-  //   today.setHours(0, 0, 0, 0)
-  //   return date < today
-  // }
-
-  // Function to check if a date is today
-  // const isDateToday = (dateStr) => {
-  //   const date = parseDateFromDDMMYYYY(dateStr)
-  //   if (!date) return false
-  //   const today = new Date()
-  //   today.setHours(0, 0, 0, 0)
-  //   return date.getTime() === today.getTime()
-  // }
-
-  // Function to check if a date is tomorrow
-  const isDateTomorrow = (dateStr) => {
-    const date = parseDateFromDDMMYYYY(dateStr)
-    if (!date) return false
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    tomorrow.setHours(0, 0, 0, 0)
-    return date.getTime() === tomorrow.getTime()
-  }
-
-  // Function to check if a date is in the future (from tomorrow onwards)
- 
-
-  // Safe access to cell value
-  const getCellValue = (row, index) => {
-    if (!row || !row.c || index >= row.c.length) return null
-    const cell = row.c[index]
-    return cell && 'v' in cell ? cell.v : null
-  }
-
- 
-   // Date helper functions
-   const formatDateToDDMMYYYY = (date) => {
+  const formatDateToDDMMYYYY = (date) => {
     if (!date || !(date instanceof Date) || isNaN(date)) return "";
-    const day = date.getDate().toString().padStart(2, '0')
-    const month = (date.getMonth() + 1).toString().padStart(2, '0')
-    const year = date.getFullYear()
-    return `${day}/${month}/${year}`
-  }
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
+  // Check if date is today
   const isDateToday = (date) => {
-    if (!date) return false
-    const today = new Date()
+    if (!date || !(date instanceof Date)) return false;
+    const today = new Date();
     return (
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
-    )
-  }
+    );
+  };
 
+  // Check if date is in the past (excluding today)
   const isDateInPast = (date) => {
-    if (!date) return false
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return date < today && !isDateToday(date)
-  }
+    if (!date || !(date instanceof Date)) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    return checkDate < today;
+  };
 
+  // Check if date is in the future (excluding today)
   const isDateFuture = (date) => {
-    if (!date) return false
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return date > today
-  }
+    if (!date || !(date instanceof Date)) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    return checkDate > today;
+  };
 
-const parseDateFromDDMMYYYY = (dateStr) => {
-  if (dateStr instanceof Date) return dateStr
+  // Function to check if a date is tomorrow
+  const isDateTomorrow = (dateStr) => {
+    const date = parseTaskStartDate(dateStr);
+    if (!date) return false;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    return date.getTime() === tomorrow.getTime();
+  };
 
-  if (typeof dateStr === 'string') {
-    if (dateStr.includes('/')) {
-      const parts = dateStr.split('/')
-      if (parts.length !== 3) return null
-      const [day, month, year] = parts.map(Number)
-
-      // Check if day/month/year are valid numbers
-      if (!day || !month || !year) return null
-
-      return new Date(year, month - 1, day)
-    }
-
-    // Fallback: Try ISO format
-    const parsed = new Date(dateStr)
-    if (!isNaN(parsed)) return parsed
-  }
-
-  console.warn('Unsupported date format in parseDateFromDDMMYYYY:', dateStr)
-  return null
-}
-
-
-
-
-  // Parse Google Sheets Date format into a proper date string
-  // const parseSupabaseDateToDDMMYYYY = (dateStr) => {
-  //   if (!dateStr) return '';
-  
-  //   try {
-  //     const date = new Date(dateStr);
-  //     if (isNaN(date.getTime())) return ''; // Invalid date
-  
-  //     const day = String(date.getDate()).padStart(2, '0');
-  //     const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-  //     const year = date.getFullYear();
-  
-  //     return `${day}/${month}/${year}`;
-  //   } catch (e) {
-  //     console.error("Error parsing Supabase date:", e);
-  //     return '';
-  //   }
-  // };
-  
-
-  // Modified fetch function to support both checklist and delegation
-const fetchDepartmentData = async () => {
+  // Updated fetch function to support both checklist and delegation with proper date filtering
+  const fetchDepartmentData = async () => {
     try {
-      const data = await fetchDashboardDataApi(dashboardType)
-      const username = localStorage.getItem('user-name')
-      const userRole = localStorage.getItem('role')
+      // Get all data first
+      const data = await fetchDashboardDataApi(dashboardType);
+      const username = localStorage.getItem('user-name');
+      const userRole = localStorage.getItem('role');
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // End of today
 
-      let totalTasks = 0
-      let completedTasks = 0
-      let pendingTasks = 0
-      let overdueTasks = 0
-      let completedRatingOne = 0
-      let completedRatingTwo = 0
-      let completedRatingThreePlus = 0
+      let totalTasks = 0;
+      let completedTasks = 0;
+      let pendingTasks = 0;
+      let overdueTasks = 0;
+      let completedRatingOne = 0;
+      let completedRatingTwo = 0;
+      let completedRatingThreePlus = 0;
 
       const monthlyData = {
         Jan: { completed: 0, pending: 0 },
@@ -363,48 +249,57 @@ const fetchDepartmentData = async () => {
         Oct: { completed: 0, pending: 0 },
         Nov: { completed: 0, pending: 0 },
         Dec: { completed: 0, pending: 0 }
+      };
+
+      // Filter data first - for checklist, only include tasks up to today
+      let filteredData = data;
+      if (dashboardType === "checklist") {
+        filteredData = data.filter(task => {
+          const taskDate = parseTaskStartDate(task.task_start_date);
+          return taskDate && taskDate <= today;
+        });
       }
 
       // Process tasks with your field names
-      const processedTasks = data.map(task => {
+      const processedTasks = filteredData.map(task => {
         // Skip if not assigned to current user (for non-admin)
         if (userRole !== "admin" && task.name?.toLowerCase() !== username?.toLowerCase()) {
-          return null
+          return null;
         }
 
-        const taskStartDate = task.task_start_date ? new Date(task.task_start_date) : null
-        const completionDate = task.submission_date ? new Date(task.submission_date) : null
+        const taskStartDate = parseTaskStartDate(task.task_start_date);
+        const completionDate = task.submission_date ? parseTaskStartDate(task.submission_date) : null;
         
-        let status = "pending"
+        let status = "pending";
         if (completionDate) {
-          status = "completed"
-        } else if (taskStartDate && taskStartDate < new Date() && !isDateToday(taskStartDate)) {
-          status = "overdue"
+          status = "completed";
+        } else if (taskStartDate && isDateInPast(taskStartDate)) {
+          status = "overdue";
         }
 
         // Count based on status
         if (status === "completed") {
-          completedTasks++
+          completedTasks++;
           if (dashboardType === "delegation") {
-            if (task.color_code_for === 1) completedRatingOne++
-            else if (task.color_code_for === 2) completedRatingTwo++
-            else if (task.color_code_for >= 3) completedRatingThreePlus++
+            if (task.color_code_for === 1) completedRatingOne++;
+            else if (task.color_code_for === 2) completedRatingTwo++;
+            else if (task.color_code_for >= 3) completedRatingThreePlus++;
           }
         } else {
-          pendingTasks++
-          if (status === "overdue") overdueTasks++
+          pendingTasks++;
+          if (status === "overdue") overdueTasks++;
         }
 
-        totalTasks++
+        totalTasks++;
 
         // Update monthly data
         if (taskStartDate) {
-          const monthName = taskStartDate.toLocaleString("default", { month: "short" })
+          const monthName = taskStartDate.toLocaleString("default", { month: "short" });
           if (monthlyData[monthName]) {
             if (status === "completed") {
-              monthlyData[monthName].completed++
+              monthlyData[monthName].completed++;
             } else {
-              monthlyData[monthName].pending++
+              monthlyData[monthName].pending++;
             }
           }
         }
@@ -412,49 +307,50 @@ const fetchDepartmentData = async () => {
         return {
           id: task.task_id,
           title: task.task_description,
-          assignedTo: task.name || "Unassigned", // Fallback for null/undefined
+          assignedTo: task.name || "Unassigned",
           taskStartDate: formatDateToDDMMYYYY(taskStartDate),
+          originalTaskStartDate: task.task_start_date, // Keep original for filtering
           status,
           frequency: task.frequency || "one-time",
           rating: task.color_code_for || 0
-        }
-      }).filter(Boolean)
+        };
+      }).filter(Boolean);
 
-      const completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : 0
+      const completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : 0;
 
       const barChartData = Object.entries(monthlyData).map(([name, data]) => ({
         name,
         completed: data.completed,
         pending: data.pending
-      }))
+      }));
 
       const pieChartData = [
         { name: "Completed", value: completedTasks, color: "#22c55e" },
         { name: "Pending", value: pendingTasks, color: "#facc15" },
         { name: "Overdue", value: overdueTasks, color: "#ef4444" }
-      ]
+      ];
 
-      const staffMap = new Map()
+      const staffMap = new Map();
       
       if (processedTasks.length > 0) {
         processedTasks.forEach(task => {
-          const assignedTo = task.assignedTo || "Unassigned" // Ensure we have a string
+          const assignedTo = task.assignedTo || "Unassigned";
           if (!staffMap.has(assignedTo)) {
             staffMap.set(assignedTo, {
               name: assignedTo,
               totalTasks: 0,
               completedTasks: 0,
               pendingTasks: 0
-            })
+            });
           }
-          const staff = staffMap.get(assignedTo)
-          staff.totalTasks++
+          const staff = staffMap.get(assignedTo);
+          staff.totalTasks++;
           if (task.status === "completed") {
-            staff.completedTasks++
+            staff.completedTasks++;
           } else {
-            staff.pendingTasks++
+            staff.pendingTasks++;
           }
-        })
+        });
       }
 
       const staffMembers = Array.from(staffMap.values()).map(staff => ({
@@ -462,7 +358,7 @@ const fetchDepartmentData = async () => {
         id: (staff.name || "unassigned").replace(/\s+/g, "-").toLowerCase(),
         email: `${(staff.name || "unassigned").toLowerCase().replace(/\s+/g, ".")}@example.com`,
         progress: staff.totalTasks > 0 ? Math.round((staff.completedTasks / staff.totalTasks) * 100) : 0
-      }))
+      }));
 
       setDepartmentData({
         allTasks: processedTasks,
@@ -477,91 +373,92 @@ const fetchDepartmentData = async () => {
         completedRatingOne,
         completedRatingTwo,
         completedRatingThreePlus
-      })
+      });
 
     } catch (error) {
-      console.error(`Error fetching ${dashboardType} data:`, error)
+      console.error(`Error fetching ${dashboardType} data:`, error);
     }
-  }
+  };
+
   useEffect(() => {
     fetchDepartmentData();
     dispatch(totalTaskInTable(dashboardType));
-    dispatch(completeTaskInTable(dashboardType))
-    dispatch(pendingTaskInTable(dashboardType))
-    dispatch(overdueTaskInTable(dashboardType))
-  }, [dashboardType])
+    dispatch(completeTaskInTable(dashboardType));
+    dispatch(pendingTaskInTable(dashboardType));
+    dispatch(overdueTaskInTable(dashboardType));
+  }, [dashboardType]);
 
   // Filter tasks based on criteria
   const filteredTasks = departmentData.allTasks.filter((task) => {
-    if (filterStatus !== "all" && task.status !== filterStatus) return false
+    if (filterStatus !== "all" && task.status !== filterStatus) return false;
     if (filterStaff !== "all" && task.assignedTo.toLowerCase() !== filterStaff.toLowerCase()) {
-      return false
+      return false;
     }
     if (searchQuery && searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase().trim()
+      const query = searchQuery.toLowerCase().trim();
       return (
         (task.title && task.title.toLowerCase().includes(query)) ||
         (task.id && task.id.toString().includes(query)) ||
         (task.assignedTo && task.assignedTo.toLowerCase().includes(query))
-      )
+      );
     }
-    return true
-  })
+    return true;
+  });
 
   // Get tasks by view
   const getTasksByView = (view) => {
     return filteredTasks.filter(task => {
-      const taskDate = parseDateFromDDMMYYYY(task.taskStartDate)
-      if (!taskDate) return false
+      const taskDate = parseTaskStartDate(task.originalTaskStartDate);
+      if (!taskDate) return false;
 
       switch (view) {
         case "recent":
-          return isDateToday(taskDate)
+          return isDateToday(taskDate);
         case "upcoming":
           return dashboardType === "delegation" 
             ? isDateFuture(taskDate)
-            : isDateTomorrow(taskDate)
+            : isDateTomorrow(task.originalTaskStartDate);
         case "overdue":
-          return isDateInPast(taskDate)
+          return isDateInPast(taskDate);
         default:
-          return true
+          return true;
       }
-    })
-  }
+    });
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
       case "completed":
-        return "bg-green-500 hover:bg-green-600 text-white"
+        return "bg-green-500 hover:bg-green-600 text-white";
       case "pending":
-        return "bg-amber-500 hover:bg-amber-600 text-white"
+        return "bg-amber-500 hover:bg-amber-600 text-white";
       case "overdue":
-        return "bg-red-500 hover:bg-red-600 text-white"
+        return "bg-red-500 hover:bg-red-600 text-white";
       default:
-        return "bg-gray-500 hover:bg-gray-600 text-white"
+        return "bg-gray-500 hover:bg-gray-600 text-white";
     }
-  }
+  };
 
   const getFrequencyColor = (frequency) => {
     switch (frequency) {
       case "one-time":
-        return "bg-gray-500 hover:bg-gray-600 text-white"
+        return "bg-gray-500 hover:bg-gray-600 text-white";
       case "daily":
-        return "bg-blue-500 hover:bg-blue-600 text-white"
+        return "bg-blue-500 hover:bg-blue-600 text-white";
       case "weekly":
-        return "bg-purple-500 hover:bg-purple-600 text-white"
+        return "bg-purple-500 hover:bg-purple-600 text-white";
       case "fortnightly":
-        return "bg-indigo-500 hover:bg-indigo-600 text-white"
+        return "bg-indigo-500 hover:bg-indigo-600 text-white";
       case "monthly":
-        return "bg-orange-500 hover:bg-orange-600 text-white"
+        return "bg-orange-500 hover:bg-orange-600 text-white";
       case "quarterly":
-        return "bg-amber-500 hover:bg-amber-600 text-white"
+        return "bg-amber-500 hover:bg-amber-600 text-white";
       case "yearly":
-        return "bg-emerald-500 hover:bg-emerald-600 text-white"
+        return "bg-emerald-500 hover:bg-emerald-600 text-white";
       default:
-        return "bg-gray-500 hover:bg-gray-600 text-white"
+        return "bg-gray-500 hover:bg-gray-600 text-white";
     }
-  }
+  };
 
   // Tasks Overview Chart Component
   const TasksOverviewChart = () => {
@@ -577,8 +474,8 @@ const fetchDepartmentData = async () => {
           <Bar dataKey="pending" stackId="a" fill="#f87171" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
-    )
-  }
+    );
+  };
 
   // Tasks Completion Chart Component
   const TasksCompletionChart = () => {
@@ -594,8 +491,8 @@ const fetchDepartmentData = async () => {
           <Legend />
         </PieChart>
       </ResponsiveContainer>
-    )
-  }
+    );
+  };
 
   // Staff Tasks Table Component
   const StaffTasksTable = () => {
@@ -607,7 +504,7 @@ const fetchDepartmentData = async () => {
     const staffMembersWithCurrentTasks = departmentData.staffMembers.map(staff => {
       // Filter tasks assigned to this staff member that are not upcoming (due today or before)
       const staffTasks = departmentData.allTasks.filter(task => {
-        const taskDate = parseDateFromDDMMYYYY(task.taskStartDate);
+        const taskDate = parseTaskStartDate(task.originalTaskStartDate);
         return task.assignedTo === staff.name && taskDate && taskDate <= today;
       });
       
