@@ -1,18 +1,23 @@
+// Updated API functions - replace your existing functions with these:
+
 import supabase from "../../SupabaseClient";
 
-export const fetchDashboardDataApi = async (dashboardType) => {
+export const fetchDashboardDataApi = async (dashboardType, staffFilter = null) => {
   try {
-    console.log(dashboardType)
-    const { data, error } = await supabase
-      .from(dashboardType)
-      .select('*');
+    console.log(dashboardType, staffFilter)
+    let query = supabase.from(dashboardType).select('*');
+    
+    // Apply staff filter if provided and not "all"
+    if (staffFilter && staffFilter !== 'all') {
+      query = query.eq('name', staffFilter);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.log("Error when fetching data", error);
       return [];
     }
-
-   
 
     console.log("Fetched successfully", data);
     return data;
@@ -24,15 +29,20 @@ export const fetchDashboardDataApi = async (dashboardType) => {
 };
 
 
-export const countTotalTaskApi = async (dashboardType) => {
-   const role=localStorage.getItem('role');
-   const username=localStorage.getItem('user-name');
+export const countTotalTaskApi = async (dashboardType, staffFilter = null) => {
+  const role = localStorage.getItem('role');
+  const username = localStorage.getItem('user-name');
   try {
     let query = supabase
       .from(dashboardType)
       .select('*', { count: 'exact', head: true });
 
-    if (role === 'user' && username) {
+    // Apply staff filter logic
+    if (staffFilter && staffFilter !== 'all') {
+      // If staff filter is specified, use it regardless of role
+      query = query.eq('name', staffFilter);
+    } else if (role === 'user' && username) {
+      // If no staff filter but user role, filter by username
       query = query.eq('name', username);
     }
 
@@ -51,10 +61,9 @@ export const countTotalTaskApi = async (dashboardType) => {
   }
 };
 
-
-export const countCompleteTaskApi = async (dashboardType) => {
-   const role=localStorage.getItem('role');
-   const username=localStorage.getItem('user-name');
+export const countCompleteTaskApi = async (dashboardType, staffFilter = null) => {
+  const role = localStorage.getItem('role');
+  const username = localStorage.getItem('user-name');
   try {
     let query;
 
@@ -64,19 +73,18 @@ export const countCompleteTaskApi = async (dashboardType) => {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'done')
         .eq('color_code_for', 1);
-
-      if (role === 'user' && username) {
-        query = query.eq('name', username);
-      }
     } else {
       query = supabase
         .from('checklist')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'Yes');
+    }
 
-      if (role === 'user' && username) {
-        query = query.eq('name', username);
-      }
+    // Apply staff filter logic
+    if (staffFilter && staffFilter !== 'all') {
+      query = query.eq('name', staffFilter);
+    } else if (role === 'user' && username) {
+      query = query.eq('name', username);
     }
 
     const { count, error } = await query;
@@ -94,11 +102,9 @@ export const countCompleteTaskApi = async (dashboardType) => {
   }
 };
 
-
-
-export const countPendingOrDelayTaskApi = async (dashboardType) => {
-   const role=localStorage.getItem('role');
-   const username=localStorage.getItem('user-name');
+export const countPendingOrDelayTaskApi = async (dashboardType, staffFilter = null) => {
+  const role = localStorage.getItem('role');
+  const username = localStorage.getItem('user-name');
   try {
     const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
     let query;
@@ -109,20 +115,19 @@ export const countPendingOrDelayTaskApi = async (dashboardType) => {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'done')
         .eq('color_code_for', 2);
-
-      if (role === 'user' && username) {
-        query = query.eq('name', username);
-      }
     } else {
       query = supabase
         .from('checklist')
         .select('*', { count: 'exact', head: true })
         .or('status.is.null')
         .lte('task_start_date', `${today}T23:59:59`);
+    }
 
-      if (role === 'user' && username) {
-        query = query.eq('name', username);
-      }
+    // Apply staff filter logic
+    if (staffFilter && staffFilter !== 'all') {
+      query = query.eq('name', staffFilter);
+    } else if (role === 'user' && username) {
+      query = query.eq('name', username);
     }
 
     const { count, error } = await query;
@@ -140,37 +145,32 @@ export const countPendingOrDelayTaskApi = async (dashboardType) => {
   }
 };
 
-
-export const countOverDueORExtendedTaskApi = async (dashboardType) => {
-  const role=localStorage.getItem('role');
-   const username=localStorage.getItem('user-name');
+export const countOverDueORExtendedTaskApi = async (dashboardType, staffFilter = null) => {
+  const role = localStorage.getItem('role');
+  const username = localStorage.getItem('user-name');
   try {
     let query;
     const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
 
     if (dashboardType === 'delegation') {
-      // From 'delegation' table where status = 'done' AND color_code_for > 2
       query = supabase
         .from('delegation')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'done')
         .gt('color_code_for', 2);
-
-      // Apply user-based filter if role is user
-      if (role === 'user' && username) {
-        query = query.eq('name', username);
-      }
     } else {
-      // From 'checklist' table where status is null AND task_start_date < today
       query = supabase
         .from('checklist')
         .select('*', { count: 'exact', head: true })
         .is('status', null)
         .lt('task_start_date', today); // exclude today
+    }
 
-      if (role === 'user' && username) {
-        query = query.eq('name', username);
-      }
+    // Apply staff filter logic
+    if (staffFilter && staffFilter !== 'all') {
+      query = query.eq('name', staffFilter);
+    } else if (role === 'user' && username) {
+      query = query.eq('name', username);
     }
 
     const { count, error } = await query;
@@ -187,4 +187,3 @@ export const countOverDueORExtendedTaskApi = async (dashboardType) => {
     return null;
   }
 };
-

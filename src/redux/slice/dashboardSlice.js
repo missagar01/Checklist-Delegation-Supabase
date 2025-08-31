@@ -1,54 +1,60 @@
+// Updated Redux slice - replace your existing createAsyncThunk functions with these:
+
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { countCompleteTaskApi, countOverDueORExtendedTaskApi, countPendingOrDelayTaskApi, countTotalTaskApi, fetchDashboardDataApi } from "../api/dashboardApi";
 
-export const dashboardData = createAsyncThunk( 'fetch/dashboard',async (dashboardType) => {
-    const Task = await fetchDashboardDataApi(dashboardType);
-   
+export const dashboardData = createAsyncThunk(
+  'fetch/dashboard',
+  async ({ dashboardType, staffFilter }) => {
+    const Task = await fetchDashboardDataApi(dashboardType, staffFilter);
     return Task;
   }
 );
 
-export const totalTaskInTable = createAsyncThunk( 'fetch/totaltask',async (dashboardType) => {
-    const totalTask = await countTotalTaskApi(dashboardType);
-   
+
+export const totalTaskInTable = createAsyncThunk(
+  'fetch/totaltask',
+  async ({ dashboardType, staffFilter }) => {
+    const totalTask = await countTotalTaskApi(dashboardType, staffFilter);
     return totalTask;
   }
 );
 
-export const completeTaskInTable = createAsyncThunk( 'fetch/completeTask',async (dashboardType) => {
-    const completeTask = await countCompleteTaskApi(dashboardType);
-   
+export const completeTaskInTable = createAsyncThunk(
+  'fetch/completeTask',
+  async ({ dashboardType, staffFilter }) => {
+    const completeTask = await countCompleteTaskApi(dashboardType, staffFilter);
     return completeTask;
   }
 );
 
-export const pendingTaskInTable = createAsyncThunk( 'fetch/pendingTask',async (dashboardType) => {
-    const pendingTask = await countPendingOrDelayTaskApi(dashboardType);
-   
+export const pendingTaskInTable = createAsyncThunk(
+  'fetch/pendingTask',
+  async ({ dashboardType, staffFilter }) => {
+    const pendingTask = await countPendingOrDelayTaskApi(dashboardType, staffFilter);
     return pendingTask;
   }
 );
 
-export const overdueTaskInTable = createAsyncThunk( 'fetch/overdueTask',async (dashboardType) => {
-    const overdueTask = await countOverDueORExtendedTaskApi(dashboardType);
-   
+export const overdueTaskInTable = createAsyncThunk(
+  'fetch/overdueTask',
+  async ({ dashboardType, staffFilter }) => {
+    const overdueTask = await countOverDueORExtendedTaskApi(dashboardType, staffFilter);
     return overdueTask;
   }
 );
 
-
+// Keep the rest of your dashboardSlice exactly the same - don't change it
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
-    dashboard:[],
-    totalTask:[],
-    completeTask:[],
-    pendingTask:[],
-     overdueTask:[],
+    dashboard: [],
+    totalTask: [],
+    completeTask: [],
+    pendingTask: [],
+    overdueTask: [],
     error: null,
     loading: false,
-    
-   
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -65,7 +71,7 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-       .addCase(totalTaskInTable.pending, (state) => {
+      .addCase(totalTaskInTable.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -77,7 +83,7 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-        .addCase(completeTaskInTable.pending, (state) => {
+      .addCase(completeTaskInTable.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -89,7 +95,7 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-         .addCase(pendingTaskInTable.pending, (state) => {
+      .addCase(pendingTaskInTable.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -101,7 +107,7 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-        .addCase(overdueTaskInTable.pending, (state) => {
+      .addCase(overdueTaskInTable.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -113,7 +119,6 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
   },
 });
 
